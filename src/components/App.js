@@ -8,7 +8,10 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            account: ''
+            account: '',
+            contract: null,
+            totalSupply: 0,
+            kryptoBirdz: [],
         };
     }
 
@@ -39,7 +42,17 @@ class App extends Component {
             const abi = KryptoBird.abi;
             const address = networkData.address;
             const contract = new web3.eth.Contract(abi, address);
-            console.log(contract);
+            this.setState({contract});
+
+            const totalSupply = await contract.methods.totalSupply().call();
+            this.setState({totalSupply});
+            for (let i = 1; i <= totalSupply; i++) {
+                const kryptoBird = await contract.methods.kryptoBirdz(i -1).call();
+                this.setState({kryptoBirdz:[...this.state.kryptoBirdz, kryptoBird]});
+            }
+            console.log(this.state.kryptoBirdz);
+        } else {
+            window.alert('Smart contract not deployed.');
         }
     }
 
@@ -49,6 +62,14 @@ class App extends Component {
         } else if (accounts[0] !== this.state.account) {
             this.setState({account:accounts[0]});
         }
+    }
+
+    mint = (kryptoBird) => {
+        this.state.contract.methods.mint(kryptoBird).send({
+            from: this.state.account,
+        }).once('receipt', (receipt) => {
+            this.setState({kryptoBirdz:[...this.state.kryptoBirdz, kryptoBird]})
+        });
     }
 
     render() {
@@ -67,7 +88,28 @@ class App extends Component {
                         </li>
                     </ul>
                 </nav>
-                <h1>NFT Marketplace</h1>
+
+                <div className='container-fluid mt-1'>
+                    <div className='row'>
+                        <main role='main' className='col-lg-12 d-flex text-center'>
+                            <div className='content mr-auto ml-auto'
+                                style={{opacity: '0.8'}}>
+                                <h1 style={{color:'white'}}>KryptoBirdz - NFT Marketplace</h1>
+                                <form onSubmit={e => {
+                                    e.preventDefault();
+                                    const kryptoBird = this.kryptoBird.value;
+                                    this.mint(kryptoBird);
+                                }}>
+                                    <input type='text' placeholder='Add a file location' className='form-control mb-1'
+                                        ref={(input) => this.kryptoBird = input}/>
+                                    <input type='submit' className='btn btn-primary' value='MINT'
+                                        style={{margin: '6px'}}/>
+                                </form>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+
             </div>
         )
     }
