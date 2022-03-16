@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import "./ERC165.sol";
 import "./interfaces/IERC721.sol";
+import "./libraries/Counters.sol";
 
 // building out the minting function:
   // a. nft to point to an address
@@ -12,13 +13,14 @@ import "./interfaces/IERC721.sol";
   // e. create an event that emits a transfer log - contract address, where it is being minted to, the id
 
 contract ERC721 is ERC165, IERC721 {
+  using Counters for Counters.Counter;
 
   //event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
   //event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
   event ApprovalForAll(address indexed sender, address indexed operator, bool indexed approved);
 
   mapping(uint256 => address) private _tokenOwner;
-  mapping(address => uint256) private _ownedTokensCount;
+  mapping(address => Counters.Counter) private _ownedTokensCount;
 
   mapping(uint256 => address) private _tokenApprovals;
   mapping(address => mapping(address => bool)) private _operatorApprovals;
@@ -30,7 +32,7 @@ contract ERC721 is ERC165, IERC721 {
 
   function balanceOf(address _owner) public override view returns (uint256) {
     require(_owner != address(0), "ERC721: owner query for non-existent token");
-    return _ownedTokensCount[_owner];
+    return _ownedTokensCount[_owner].current();
   }
 
   function ownerOf(uint256 _tokenId) public override view returns (address) {
@@ -44,16 +46,19 @@ contract ERC721 is ERC165, IERC721 {
     return owner != address(0);
   }
 
+  // this function is not safe
+  // any type of mathematics can be held to dubious standards in SOLIDITY.
   function _mint(address to, uint256 tokenId) internal virtual {
     require(to != address(0), "ERC721: minting to the zero address");
     require(!_exists(tokenId), "ERC721: token already minted");
 
     _tokenOwner[tokenId] = to;
-    _ownedTokensCount[to] += 1;
+    _ownedTokensCount[to].increment();
 
     emit Transfer(address(0), to, tokenId);
   }
 
+  // this is not safe.
   function _transferFrom(address _from, address _to, uint256 _tokenId) internal {
     address owner = ownerOf(_tokenId);
 
@@ -61,10 +66,10 @@ contract ERC721 is ERC165, IERC721 {
     require(_from == owner, "ERC721: from address need to be the owner of the token");
     require(_to != address(0), "ERC721: sending to the zero address");
 
-    _ownedTokensCount[_from] -= 1;
+    _ownedTokensCount[_from].decrement();
 
     _tokenOwner[_tokenId] = _to;
-    _ownedTokensCount[_to] += 1;
+    _ownedTokensCount[_to].increment();
 
     emit Transfer(_from, _to, _tokenId);
   }
