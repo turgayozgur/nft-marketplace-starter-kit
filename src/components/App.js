@@ -2,6 +2,18 @@ import React, { Component } from "react";
 import Web3 from 'web3';
 import detectEthereumProvider from "@metamask/detect-provider";
 import KryptoBird from '../abis/Kryptobird.json';
+import {MDBCard, MDBCardBody, MDBCardTitle, MDBCardImage, MDBBtn, MDBCardText} from 'mdb-react-ui-kit';
+import './App.css';
+
+/*
+K1: https://i.ibb.co/8rZ2K4T/k1.png
+K2: https://i.ibb.co/0pLGzw7/k2.png
+K3: https://i.ibb.co/jhtzBDr/k3.png
+K4: https://i.ibb.co/C00Fv4T/k4.png
+K5: https://i.ibb.co/JqSBdbk/k5.png
+K6: https://i.ibb.co/pdrsNk1/k6.png
+K7: https://i.ibb.co/RbrwS4T/k7.png
+* */
 
 class App extends Component {
 
@@ -16,7 +28,10 @@ class App extends Component {
     }
 
     async componentDidMount() {
-        await this.loadWeb3();
+        if (!await this.loadWeb3()) {
+            alert('There is no ethereum wallet connected.');
+            return;
+        }
         await this.loadBlockChainData();
     }
 
@@ -26,8 +41,10 @@ class App extends Component {
         if (provider) {
             console.log('ethereum wallet is connected.');
             window.web3 = new Web3(provider);
+            return true;
         } else {
             console.log('there is no ethereum wallet detected.');
+            return false;
         }
     }
 
@@ -50,7 +67,6 @@ class App extends Component {
                 const kryptoBird = await contract.methods.kryptoBirdz(i -1).call();
                 this.setState({kryptoBirdz:[...this.state.kryptoBirdz, kryptoBird]});
             }
-            console.log(this.state.kryptoBirdz);
         } else {
             window.alert('Smart contract not deployed.');
         }
@@ -74,7 +90,7 @@ class App extends Component {
 
     render() {
         return (
-            <div>
+            <div className='container-filled'>
                 <nav className='navbar nav-dark fixed-top bg-dark flex-md-nowrap p-0 shadow'>
                     <div className='navbar-brand col-sm-4 col-md-3 mr-0'
                         style={{color:'white'}}>
@@ -94,7 +110,7 @@ class App extends Component {
                         <main role='main' className='col-lg-12 d-flex text-center'>
                             <div className='content mr-auto ml-auto'
                                 style={{opacity: '0.8'}}>
-                                <h1 style={{color:'white'}}>KryptoBirdz - NFT Marketplace</h1>
+                                <h1 style={{color:'black'}}>KryptoBirdz - NFT Marketplace</h1>
                                 <form onSubmit={e => {
                                     e.preventDefault();
                                     const kryptoBird = this.kryptoBird.value;
@@ -108,6 +124,28 @@ class App extends Component {
                             </div>
                         </main>
                     </div>
+
+                    <hr/>
+
+                    <div className='row text-center'>
+                        {this.state.kryptoBirdz.map((kryptoBird, key) => {
+                            return (
+                                <div key={key}>
+                                    <div>
+                                        <MDBCard className='token' style={{maxWidth:'22rem'}}>
+                                            <MDBCardImage src={kryptoBird} position='top' height='250rem' style={{marginRight:'4px'}}/>
+                                            <MDBCardBody>
+                                                <MDBCardTitle style={{color:'white'}}> KryptoBirdz </MDBCardTitle>
+                                                <MDBCardText style={{color:'white'}}> The KryptoBirdz are 20 uniquely generated KBirdz from the cyberpunk cloud galaxy Mystopia! There is only one of each bird and each bird can be owned by a single person on the Ethereum blockchain. </MDBCardText>
+                                                <MDBBtn href={kryptoBird}>Download</MDBBtn>
+                                            </MDBCardBody>
+                                        </MDBCard>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
                 </div>
 
             </div>
